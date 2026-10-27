@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora PIX Pro - O Capital da Matemática</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            dark: '#07080e',
+                            card: '#121520',
+                            neonGreen: '#00ff66',
+                            neonPink: '#ff007f',
+                            neonCyan: '#00f0ff',
+                            darkGray: '#151929'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Courier New', 'monospace']
+                    },
+                    boxShadow: {
+                        'neon-green': '0 0 20px rgba(0, 255, 102, 0.35)',
+                        'neon-pink': '0 0 20px rgba(255, 0, 127, 0.35)',
+                        'neon-cyan': '0 0 20px rgba(0, 240, 255, 0.35)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #07080e;
+            color: #f3f4f6;
+        }
+        .glass-panel {
+            background: rgba(18, 21, 32, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        .glow-green {
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.6);
+        }
+        .glow-pink {
+            text-shadow: 0 0 10px rgba(255, 0, 127, 0.6);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0d14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f293d;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start lg:justify-center p-3 sm:p-6 selection:bg-cyber-neonCyan selection:text-black">
+
+    <!-- Top Banner / Humor Ticker -->
+    <header class="w-full max-w-5xl mb-4 flex flex-col sm:flex-row items-center justify-between bg-cyber-card/90 border border-cyan-500/20 rounded-2xl px-5 py-3 shadow-lg">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyber-neonCyan">
+                <i class="fa-solid fa-calculator text-lg animate-pulse"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-bold text-white tracking-wide uppercase">Calculadora PIX <span class="text-cyber-neonGreen text-xs px-2 py-0.5 bg-emerald-950/60 rounded border border-emerald-500/30 ml-1">v3.0 Pro</span></h1>
+                <p class="text-xs text-gray-400">"A matemática é exata, mas o acesso a ela custa R$ 5,00."</p>
+            </div>
+        </div>
+        <div class="mt-2 sm:mt-0 flex items-center gap-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pink-950/50 text-cyber-neonPink border border-pink-500/30">
+                <i class="fa-solid fa-shield-halved mr-1.5"></i> Taxa Fixa: R$ 5,00 / Cálculo
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Grid Container -->
+    <main class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Calculator Column (7 cols) -->
+        <section class="lg:col-span-7 glass-panel rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+            <!-- Decorative corner accent -->
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-cyan-500/10 to-transparent pointer-events-none"></div>
+
+            <!-- Screen / Display -->
+            <div class="bg-[#05060a] border border-cyan-500/25 rounded-xl p-4 mb-5 shadow-inner relative">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-mono text-gray-500 uppercase tracking-widest"><i class="fa-solid fa-terminal mr-1"></i> Input Stream</span>
+                    <span id="lockStatusBadge" class="text-[10px] font-bold text-cyber-neonPink uppercase tracking-wider bg-pink-950/40 px-2 py-0.5 rounded border border-pink-500/30">
+                        <i class="fa-solid fa-lock mr-1"></i> Bloqueado por PIX
+                    </span>
+                </div>
+                
+                <!-- History Sub-display -->
+                <div id="historyDisplay" class="text-right text-xs font-mono text-gray-400 h-5 overflow-x-auto whitespace-nowrap tracking-wider"></div>
+                
+                <!-- Main Display with Blur option -->
+                <div class="relative mt-1">
+                    <div id="display" class="text-right text-3xl sm:text-4xl font-mono font-black text-cyber-neonCyan tracking-wider overflow-x-auto whitespace-nowrap py-1 select-all">0</div>
+                    
+                    <!-- Blur Overlay if result is pending payment -->
+                    <div id="resultBlurOverlay" class="absolute inset-0 bg-[#05060a]/95 backdrop-blur-md rounded flex items-center justify-end px-3 transition-opacity duration-300 hidden">
+                        <span class="text-xs font-mono text-cyber-neonPink animate-pulse flex items-center gap-2">
+                            <i class="fa-solid fa-eye-slash"></i> Pague R$ 5,00 para ver o resultado
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keypad -->
+            <div class="grid grid-cols-4 gap-2.5">
+                <!-- Row 1 -->
+                <button onclick="clearAll()" class="col-span-2 bg-red-950/40 hover:bg-red-900/50 text-red-400 font-semibold py-3.5 rounded-xl border border-red-500/30 transition active:scale-95 text-xs sm:text-sm">
+                    <i class="fa-solid fa-trash-can mr-1"></i> AC (Limpar)
+                </button>
+                <button onclick="appendOperator('/')" class="bg-cyber-darkGray hover:bg-gray-700 text-cyber-neonCyan font-bold py-3.5 rounded-xl border border-cyan-500/20 transition active:scale-95 text-lg">÷</button>
+                <button onclick="appendOperator('*')" class="bg-cyber-darkGray hover:bg-gray-700 text-cyber-neonCyan font-bold py-3.5 rounded-xl border border-cyan-500/20 transition active:scale-95 text-lg">×</button>
+
+                <!-- Row 2 -->
+                <button onclick="appendCharacter('7')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">7</button>
+                <button onclick="appendCharacter('8')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">8</button>
+                <button onclick="appendCharacter('9')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">9</button>
+                <button onclick="appendOperator('-')" class="bg-cyber-darkGray hover:bg-gray-700 text-cyber-neonCyan font-bold py-3.5 rounded-xl border border-cyan-500/20 transition active:scale-95 text-lg">-</button>
+
+                <!-- Row 3 -->
+                <button onclick="appendCharacter('4')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">4</button>
+                <button onclick="appendCharacter('5')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">5</button>
+                <button onclick="appendCharacter('6')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">6</button>
+                <button onclick="appendOperator('+')" class="bg-cyber-darkGray hover:bg-gray-700 text-cyber-neonCyan font-bold py-3.5 rounded-xl border border-cyan-500/20 transition active:scale-95 text-lg">+</button>
+
+                <!-- Row 4 -->
+                <button onclick="appendCharacter('1')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">1</button>
+                <button onclick="appendCharacter('2')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">2</button>
+                <button onclick="appendCharacter('3')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">3</button>
+                <button onclick="calculateResult()" class="row-span-2 bg-gradient-to-b from-cyber-neonGreen to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-black py-3.5 rounded-xl shadow-neon-green transition active:scale-95 flex items-center justify-center text-xl">
+                    =
+                </button>
+
+                <!-- Row 5 -->
+                <button onclick="appendCharacter('0')" class="col-span-2 bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">0</button>
+                <button onclick="appendCharacter('.')" class="bg-[#171a2b] hover:bg-[#20253d] text-white font-semibold py-3.5 rounded-xl border border-gray-700/50 transition active:scale-95 text-lg">.</button>
+            </div>
+
+            <!-- Advanced Operations Bar -->
+            <div class="grid grid-cols-4 gap-2 mt-2.5 pt-2.5 border-t border-gray-800">
+                <button onclick="appendParenthesis('(')" class="bg-cyber-darkGray/60 hover:bg-cyber-darkGray text-gray-300 font-mono py-2 rounded-lg text-xs border border-gray-800 transition">(</button>
+                <button onclick="appendParenthesis(')')" class="bg-cyber-darkGray/60 hover:bg-cyber-darkGray text-gray-300 font-mono py-2 rounded-lg text-xs border border-gray-800 transition">)</button>
+                <button onclick="appendOperator('**')" class="bg-cyber-darkGray/60 hover:bg-cyber-darkGray text-cyber-neonCyan font-mono py-2 rounded-lg text-xs border border-gray-800 transition">x^y</button>
+                <button onclick="appendSquareRoot()" class="bg-cyber-darkGray/60 hover:bg-cyber-darkGray text-cyber-neonCyan font-mono py-2 rounded-lg text-xs border border-gray-800 transition">√x</button>
+            </div>
+        </section>
+
+        <!-- History & Status Column (5 cols) -->
+        <section class="lg:col-span-5 flex flex-col gap-5">
+            <!-- Quick Pay Widget -->
+            <div class="glass-panel rounded-2xl p-5 shadow-xl border border-pink-500/20 relative">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-qrcode text-cyber-neonPink"></i> PIX Expresso (R$ 5,00)
+                    </h3>
+                    <span class="text-[10px] text-gray-400 font-mono">Destinatário: Oficial</span>
+                </div>
+
+                <div class="bg-[#05060a] border border-pink-500/30 rounded-xl p-3 flex items-center gap-3 mb-3">
+                    <!-- Fictional QR Code Box with SVG -->
+                    <div class="w-16 h-16 bg-white p-1 rounded-lg flex-shrink-0 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" class="w-full h-full fill-black">
+                            <path d="M2,2H10V10H2V2M4,4V8H8V4H4M14,2H22V10H14V2M16,4V8H20V4H16M2,14H10V22H2V14M4,16V20H8V16H4M18,14H22V18H18V14M14,18H16V22H14V18M18,18H22V22H18V18M12,2H14V6H12V2M12,8H14V12H12V8M6,12H10V14H6V12M14,12H18V14H14V12M2,12H4V14H2V12M20,12H22V14H20V12M12,14H14V18H12V14M12,20H14V22H12V20Z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <span class="text-[10px] text-gray-400 block font-mono uppercase">Chave PIX (Telefone):</span>
+                        <div class="font-mono text-cyber-neonGreen font-bold text-sm tracking-wide truncate">32991261878</div>
+                        <span class="text-[10px] text-emerald-400/90 block mt-0.5"><i class="fa-solid fa-circle-check text-[9px] mr-1"></i> Banco Central Verificado</span>
+                    </div>
+                </div>
+
+                <button onclick="copyMainPixKey()" class="w-full bg-cyber-darkGray hover:bg-gray-700 text-cyber-neonCyan font-semibold py-2.5 rounded-xl border border-cyan-500/30 text-xs transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-regular fa-copy"></i> Copiar Chave PIX (32991261878)
+                </button>
+            </div>
+
+            <!-- History Panel -->
+            <div class="glass-panel rounded-2xl p-5 shadow-xl flex flex-col h-[320px]">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-800">
+                    <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-cyber-neonCyan"></i> Histórico de Operações
+                    </h3>
+                    <span id="historyCount" class="text-[10px] font-mono text-gray-400">0 itens</span>
+                </div>
+
+                <!-- History List Container -->
+                <div id="historyList" class="flex-grow overflow-y-auto space-y-2 pr-1">
+                    <div class="text-center text-gray-500 text-xs py-10">
+                        <i class="fa-solid fa-receipt text-2xl mb-2 opacity-30 block"></i>
+                        Nenhuma conta realizada ainda.<br>Faça um cálculo e pague o PIX para registrar.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL DE BLOQUEIO PIX (EXIGINDO O PAGAMENTO) -->
+    <div id="pixModal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-[#121522] border-2 border-cyber-neonPink rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            
+            <!-- Badge de Alerta -->
+            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-cyber-neonPink text-black font-black text-xs px-4 py-1 rounded-full uppercase tracking-widest shadow-neon-pink">
+                <i class="fa-solid fa-lock mr-1"></i> Taxa Obrigatória de PIX
+            </div>
+
+            <div class="text-center mt-3">
+                <div class="w-16 h-16 bg-pink-950/40 border border-cyber-neonPink/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-pink">
+                    <i class="fa-solid fa-pix text-3xl text-cyber-neonPink"></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white mb-1">Resultado Protegido por Lei Financeira</h3>
+                <p class="text-xs text-gray-300 mb-4">
+                    Sua conta <strong id="modalExpression" class="font-mono text-cyber-neonCyan"></strong> foi processada com sucesso. Para visualizar o resultado, transfira <strong class="text-cyber-neonGreen">R$ 5,00</strong> via PIX.
+                </p>
+
+                <!-- Box Chave PIX Detalhada -->
+                <div class="bg-[#07080e] border border-cyan-500/30 rounded-xl p-3.5 mb-5 text-left">
+                    <span class="text-[10px] uppercase text-gray-400 font-mono block mb-1">Copie a Chave PIX (Telefone):</span>
+                    <div class="flex items-center justify-between bg-[#131625] px-3 py-2 rounded-lg border border-gray-800">
+                        <span id="modalPixKey" class="font-mono text-cyber-neonGreen font-bold tracking-wider select-all text-sm">32991261878</span>
+                        <button onclick="copyModalPixKey()" class="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyber-neonCyan text-xs px-3 py-1.5 rounded-md font-semibold transition flex items-center gap-1.5 border border-cyan-500/40 active:scale-95">
+                            <i class="fa-regular fa-copy"></i> Copiar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Botão Verificar Pagamento -->
+                <button onclick="simulatePixVerification()" class="w-full bg-gradient-to-r from-cyber-neonGreen to-emerald-500 hover:from-emerald-400 hover:to-emerald-400 text-black font-black py-3.5 rounded-xl shadow-neon-green transition active:scale-95 text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bolt"></i> Já fiz o PIX / Liberar Resultado
+                </button>
+                
+                <button onclick="closePixModal()" class="mt-3 text-xs text-gray-500 hover:text-gray-300 transition underline">
+                    Cancelar operação e descartar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE LOADING / VERIFICAÇÃO DO BANCO CENTRAL -->
+    <div id="loadingModal" class="fixed inset-0 bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 z-50 hidden">
+        <div class="text-center max-w-xs">
+            <div class="inline-block relative w-20 h-20 mb-4">
+                <div class="absolute inset-0 rounded-full border-4 border-cyber-neonCyan/20 border-t-cyber-neonCyan animate-spin"></div>
+                <div class="absolute inset-2 rounded-full border-4 border-cyber-neonGreen/20 border-b-cyber-neonGreen animate-spin" style="animation-direction: reverse; animation-duration: 1.2s;"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-cyber-neonCyan">
+                    <i class="fa-solid fa-satellite-dish animate-pulse"></i>
+                </div>
+            </div>
+            <h4 id="loadingText" class="text-base font-mono font-bold text-white tracking-wide">Consultando Banco Central...</h4>
+            <p class="text-xs text-gray-400 mt-1">Aguardando compensação de R$ 5,00...</p>
+        </div>
+    </div>
+
+    <!-- TOAST DE NOTIFICAÇÃO FLUTUANTE -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-[#121522] border border-cyber-neonGreen text-white px-4 py-3 rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3">
+        <div id="toastIcon" class="w-7 h-7 rounded-full bg-cyber-neonGreen/20 flex items-center justify-center text-cyber-neonGreen text-sm">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <h5 class="text-xs font-bold text-cyber-neonGreen uppercase tracking-wider" id="toastTitle">Sucesso</h5>
+            <p class="text-xs text-gray-300" id="toastMsg">Operação realizada com sucesso.</p>
+        </div>
+    </div>
+
+    <!-- JavaScript da Calculadora e PIX -->
+    <script>
+        let currentExpression = '';
+        let historyList = [];
+        let pendingCalculation = null;
+        let isResultUnlocked = true;
+
+        const display = document.getElementById('display');
+        const historyDisplay = document.getElementById('historyDisplay');
+        const lockStatusBadge = document.getElementById('lockStatusBadge');
+        const resultBlurOverlay = document.getElementById('resultBlurOverlay');
+        const pixModal = document.getElementById('pixModal');
+        const loadingModal = document.getElementById('loadingModal');
+        const modalExpression = document.getElementById('modalExpression');
+        const loadingText = document.getElementById('loadingText');
+        const historyListEl = document.getElementById('historyList');
+        const historyCountEl = document.getElementById('historyCount');
+        const toast = document.getElementById('toast');
+        const toastTitle = document.getElementById('toastTitle');
+        const toastMsg = document.getElementById('toastMsg');
+        const toastIcon = document.getElementById('toastIcon');
+
+        function updateDisplay() {
+            display.textContent = currentExpression || '0';
+        }
+
+        function appendCharacter(char) {
+            if (!isResultUnlocked) {
+                showToast('Atenção', 'Você precisa pagar o PIX da conta anterior para continuar!', true);
+                return;
+            }
+            if (currentExpression === '0' && char !== '.') {
+                currentExpression = char;
+            } else {
+                currentExpression += char;
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (!isResultUnlocked) return;
+            if (currentExpression === '') return;
+            // Evitar operadores duplicados
+            const lastChar = currentExpression.slice(-1);
+            if (['+', '-', '*', '/', '.'].includes(lastChar)) {
+                currentExpression = currentExpression.slice(0, -1);
+            }
+            currentExpression += op;
+            updateDisplay();
+        }
+
+        function appendParenthesis(p) {
+            if (!isResultUnlocked) return;
+            if (currentExpression === '0') {
+                currentExpression = p;
+            } else {
+                currentExpression += p;
+            }
+            updateDisplay();
+        }
+
+        function appendSquareRoot() {
+            if (!isResultUnlocked) return;
+            currentExpression += 'Math.sqrt(';
+            updateDisplay();
+        }
+
+        function clearAll() {
+            currentExpression = '';
+            isResultUnlocked = true;
+            resultBlurOverlay.classList.add('hidden');
+            lockStatusBadge.innerHTML = '<i class="fa-solid fa-lock-open mr-1"></i> Pronto para Cálculo';
+            lockStatusBadge.className = "text-[10px] font-bold text-cyber-neonGreen uppercase tracking-wider bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30";
+            historyDisplay.textContent = '';
+            updateDisplay();
+        }
+
+        // Quando o usuário aperta '='
+        function calculateResult() {
+            if (!isResultUnlocked || currentExpression.trim() === '') return;
+
+            try {
+                // Substituir potências amigáveis se necessário
+                let sanitizedExpr = currentExpression.replace(/\*\*/g, '**');
+                
+                // Avalia o cálculo matemático de forma segura simulada
+                // Usamos Function para interpretar expressões válidas de math
+                let evaluated;
+                try {
+                    evaluated = Function('"use strict";return (' + sanitizedExpr + ')')();
+                } catch(e) {
+                    evaluated = 'Erro de Sintaxe';
+                }
+
+                if (evaluated === undefined || isNaN(evaluated) || !isFinite(evaluated)) {
+                    currentExpression = 'Erro';
+                    updateDisplay();
+                    return;
+                }
+
+                pendingCalculation = {
+                    expr: currentExpression,
+                    result: evaluated,
+                    timestamp: new Date().toLocaleTimeString()
+                };
+
+                // Mostra no display a expressão com o resultado oculto pelo blur
+                historyDisplay.textContent = currentExpression + ' =';
+                currentExpression = String(evaluated);
+                updateDisplay();
+
+                // Aplica bloqueio por PIX
+                isResultUnlocked = false;
+                resultBlurOverlay.classList.remove('hidden');
+                lockStatusBadge.innerHTML = '<i class="fa-solid fa-lock mr-1"></i> Bloqueado por PIX';
+                lockStatusBadge.className = "text-[10px] font-bold text-cyber-neonPink uppercase tracking-wider bg-pink-950/40 px-2 py-0.5 rounded border border-pink-500/30";
+
+                // Abre o modal do PIX exigindo pagamento
+                modalExpression.textContent = pendingCalculation.expr + ' = ?';
+                pixModal.classList.remove('hidden');
+                setTimeout(() => pixModal.classList.remove('opacity-0'), 10);
+
+            } catch (err) {
+                currentExpression = 'Erro';
+                updateDisplay();
+            }
+        }
+
+        function closePixModal() {
+            pixModal.classList.add('opacity-0');
+            setTimeout(() => pixModal.classList.add('hidden'), 300);
+            
+            // Se cancelou, descarta a conta e limpa
+            clearAll();
+            showToast('Cancelado', 'Conta descartada por falta de pagamento.', true);
+        }
+
+        // Simulação da verificação do PIX
+        function simulatePixVerification() {
+            pixModal.classList.add('opacity-0');
+            setTimeout(() => pixModal.classList.add('hidden'), 300);
+
+            loadingModal.classList.remove('hidden');
+
+            const verificationSteps = [
+                "Buscando transferências via Pix...",
+                "Checando chave 32991261878...",
+                "Identificando depósito de R$ 5,00...",
+                "Pagamento confirmado pelo Banco Central!"
+            ];
+
+            let step = 0;
+            const timer = setInterval(() => {
+                step++;
+                if (step < verificationSteps.length) {
+                    loadingText.textContent = verificationSteps[step];
+                } else {
+                    clearInterval(timer);
+                    setTimeout(() => {
+                        loadingModal.classList.add('hidden');
+                        
+                        // Libera o resultado
+                        isResultUnlocked = true;
+                        resultBlurOverlay.classList.add('hidden');
+                        lockStatusBadge.innerHTML = '<i class="fa-solid fa-unlock mr-1"></i> Liberado (Pago)';
+                        lockStatusBadge.className = "text-[10px] font-bold text-cyber-neonGreen uppercase tracking-wider bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30";
+
+                        // Adiciona ao histórico com sucesso
+                        addHistoryItem(pendingCalculation.expr, pendingCalculation.result, true);
+
+                        showToast('PIX Aprovado!', 'R$ 5,00 recebidos. Resultado liberado com sucesso.');
+                        currentExpression = '';
+                        updateDisplay();
+                    }, 600);
+                }
+            }, 800);
+        }
+
+        function addHistoryItem(expr, result, paid) {
+            historyList.unshift({ expr, result, paid, time: new Date().toLocaleTimeString() });
+            renderHistory();
+        }
+
+        function renderHistory() {
+            historyCountEl.textContent = `${historyList.length} itens`;
+            if (historyList.length === 0) {
+                historyListEl.innerHTML = `
+                    <div class="text-center text-gray-500 text-xs py-10">
+                        <i class="fa-solid fa-receipt text-2xl mb-2 opacity-30 block"></i>
+                        Nenhuma conta realizada ainda.<br>Faça um cálculo e pague o PIX para registrar.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            historyList.forEach((item) => {
+                html += `
+                    <div class="bg-[#07080e] border border-gray-800/80 rounded-xl p-2.5 flex items-center justify-between text-xs font-mono">
+                        <div>
+                            <span class="text-gray-400">${item.expr} =</span>
+                            <span class="text-cyber-neonCyan font-bold ml-1">${item.result}</span>
+                            <span class="text-[10px] text-gray-500 block">${item.time}</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-950/60 text-cyber-neonGreen border border-emerald-500/30 font-sans font-semibold">
+                            <i class="fa-solid fa-check mr-1"></i> R$ 5,00 Pago
+                        </span>
+                    </div>
+                `;
+            });
+            historyListEl.innerHTML = html;
+        }
+
+        // Cópia da Chave PIX com fallback
+        function copyMainPixKey() {
+            copyToClipboard("32991261878", "Chave PIX principal copiada!");
+        }
+
+        function copyModalPixKey() {
+            copyToClipboard("32991261878", "Chave PIX copiada do modal!");
+        }
+
+        function copyToClipboard(text, successMsg) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("Copiado!", successMsg);
+                }).catch(() => {
+                    fallbackCopyText(text, successMsg);
+                });
+            } else {
+                fallbackCopyText(text, successMsg);
+            }
+        }
+
+        function fallbackCopyText(text, successMsg) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("Copiado!", successMsg);
+            } catch (err) {
+                showToast("Erro", "Não foi possível copiar automaticamente.", true);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Toast Notification System
+        function showToast(title, msg, isError = false) {
+            toastTitle.textContent = title;
+            toastMsg.textContent = msg;
+            
+            if (isError) {
+                toast.classList.remove('border-cyber-neonGreen');
+                toast.classList.add('border-red-500');
+                toastTitle.className = "text-xs font-bold text-red-400 uppercase tracking-wider";
+                toastIcon.className = "w-7 h-7 rounded-full bg-red-950/40 flex items-center justify-center text-red-400 text-sm";
+                toastIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                toast.classList.remove('border-red-500');
+                toast.classList.add('border-cyber-neonGreen');
+                toastTitle.className = "text-xs font-bold text-cyber-neonGreen uppercase tracking-wider";
+                toastIcon.className = "w-7 h-7 rounded-full bg-cyber-neonGreen/20 flex items-center justify-center text-cyber-neonGreen text-sm";
+                toastIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // Suporte a teclado do usuário
+        window.addEventListener('keydown', (e) => {
+            if (!isResultUnlocked && e.key !== 'Escape') return;
+            
+            if ((e.key >= '0' && e.key <= '9') || e.key === '.') {
+                appendCharacter(e.key);
+            } else if (['+', '-', '*', '/'].includes(e.key)) {
+                appendOperator(e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                e.preventDefault();
+                calculateResult();
+            } else if (e.key === 'Backspace') {
+                if (currentExpression.length > 0) {
+                    currentExpression = currentExpression.slice(0, -1);
+                    updateDisplay();
+                }
+            } else if (e.key.toLowerCase() === 'c') {
+                clearAll();
+            }
+        });
+    </script>
+</body>
+</html>
