@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - Calculadora PIX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cyber-glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-6 font-mono">
+
+    <!-- TELA DE LOGIN -->
+    <div id="tela-login" class="w-full max-w-md cyber-glass rounded-2xl p-8 shadow-2xl">
+        <div class="text-center mb-6">
+            <h1 class="text-xl font-black text-green-400 flex items-center justify-center gap-2">
+                <span>🔒</span> PAINEL ADMIN
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">Digite a senha para acessar</p>
+        </div>
+
+        <form onsubmit="fazerLogin(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">Senha de Acesso</label>
+                <input type="password" id="password" required placeholder="••••••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-green-500 transition">
+            </div>
+            <!-- Div de erro visível -->
+            <div id="erro-login" class="text-xs text-red-400 text-center bg-red-500/10 border border-red-500/20 p-2 rounded-lg hidden"></div>
+            
+            <button type="submit" id="btn-entrar" class="w-full bg-green-500 hover:bg-green-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-green-500/20">
+                ENTRAR
+            </button>
+        </form>
+    </div>
+
+    <!-- PAINEL ADMINISTRATIVO -->
+    <div id="painel-admin" class="w-full max-w-4xl hidden">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-800 pb-4">
+            <div>
+                <h1 class="text-2xl font-black text-green-400 flex items-center gap-2">
+                    <span>⚡</span> PAINEL DE CONTROLE PIX
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">Gerencie e aprove os pagamentos dos cálculos em tempo real.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-400">
+                    Chave PIX: <strong class="text-white">32991261878</strong>
+                </span>
+                <button onclick="carregarTransacoes()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                    🔄 Atualizar
+                </button>
+                <button onclick="fazerLogout()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 text-xs px-3 py-1.5 rounded-lg transition">
+                    Sair
+                </button>
+            </div>
+        </div>
+
+        <div class="cyber-glass rounded-2xl overflow-hidden shadow-2xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-900/80 text-xs text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-4">ID / Hora</th>
+                            <th class="p-4">Expressão</th>
+                            <th class="p-4">Resultado Oculto</th>
+                            <th class="p-4">Valor</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-center">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-transacoes" class="divide-y divide-slate-800/60 text-xs">
+                        <tr>
+                            <td colspan="6" class="p-6 text-center text-slate-500">Carregando transações...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tokenSessao = localStorage.getItem('admin_token');
+
+        if (tokenSessao) {
+            liberarPainel();
+        }
+
+        async function fazerLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('btn-entrar');
+            const erroDiv = document.getElementById('erro-login');
+
+            btn.innerText = "VERIFICANDO...";
+            erroDiv.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pass })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    localStorage.setItem('admin_token', data.token);
+                    liberarPainel();
+                } else {
+                    erroDiv.innerText = data.error || "Senha incorreta.";
+                    erroDiv.classList.remove('hidden');
+                    btn.innerText = "ENTRAR";
+                }
+            } catch (err) {
+                erroDiv.innerText = "Erro de conexão com o servidor.";
+                erroDiv.classList.remove('hidden');
+                btn.innerText = "ENTRAR";
+            }
+        }
+
+        function liberarPainel() {
+            document.getElementById('tela-login').classList.add('hidden');
+            document.getElementById('painel-admin').classList.remove('hidden');
+            carregarTransacoes();
+            setInterval(carregarTransacoes, 5000);
+        }
+
+        function fazerLogout() {
+            localStorage.removeItem('admin_token');
+            location.reload();
+        }
+
+        async function carregarTransacoes() {
+            const token = localStorage.getItem('admin_token');
+            try {
+                const response = await fetch('/api/admin/transacoes', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    fazerLogout();
+                    return;
+                }
+
+                const transacoes = await response.json();
+                const tbody = document.getElementById('tabela-transacoes');
+                tbody.innerHTML = '';
+
+                if (transacoes.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">Nenhuma transação registrada ainda.</td></tr>`;
+                    return;
+                }
+
+                transacoes.reverse().forEach(t => {
+                    const statusColor = t.status === 'approved' 
+                        ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                        : 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+                    
+                    const statusText = t.status === 'approved' ? 'Aprovado' : 'Pendente';
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-900/40 transition">
+                            <td class="p-4 font-bold text-slate-300">#${t.id.slice(-6)}</td>
+                            <td class="p-4 text-white font-mono">${t.expressao}</td>
+                            <td class="p-4 text-emerald-400 font-bold">${t.resultado}</td>
+                            <td class="p-4 text-slate-300">R$ 5,00</td>
+                            <td class="p-4">
+                                <span class="px-2.5 py-1 rounded-full border text-[10px] font-bold ${statusColor}">
+                                    ${statusText}
+                                </span>
+                            </td>
+                            <td class="p-4 text-center">
+                                ${t.status !== 'approved' ? `
+                                    <button onclick="aprovarPagamento('${t.id}')" class="bg-green-500 hover:bg-green-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-lg shadow-green-500/20">
+                                        Aprovar PIX
+                                    </button>
+                                ` : `
+                                    <span class="text-slate-500 text-xs">Liberado</span>
+                                `}
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (e) {
+                console.error("Erro ao carregar transações");
+            }
+        }
+
+        async function aprovarPagamento(paymentId) {
+            const token = localStorage.getItem('admin_token');
+            await fetch('/api/simular-aprovar', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ paymentId })
+            });
+            carregarTransacoes();
+        }
+    </script>
+</body>
+</html>
